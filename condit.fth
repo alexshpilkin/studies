@@ -30,3 +30,25 @@ CREATE STASH   32 CELLS ALLOT
   TEST-OVERCATCH THROW ;
 : TEST-NESTCATCH   -2 -1 ['] TEST-NESTTHROW CATCH ;
 \ result: -2 -1 0 1 2 3 4 5
+
+\ Class system
+
+CREATE TOP   0 ,
+: CLASS ( c "name" -- )   CREATE HERE SWAP   DUP @ CELL+ DUP ,
+  OVER + >R   CELL+ BEGIN   DUP R@ < WHILE   DUP @ ,   CELL+
+  REPEAT DROP RDROP   , ;
+: EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT + @   = ;
+
+TOP CLASS FOO
+: TEST-FOO   FOO DUP   DUP @ SWAP   CELL+ DUP @ SWAP   DROP ;
+\ result: x 1cells x
+FOO CLASS BAR
+: TEST-BAR   BAR DUP   DUP @ SWAP   CELL+ DUP @ SWAP
+  CELL+ DUP @ SWAP   DROP ;
+\ result: y 2cells x y
+BAR CLASS BAZ
+: TEST-BAZ   BAZ DUP   DUP @ SWAP   CELL+ DUP @ SWAP
+  CELL+ DUP @ SWAP   CELL+ DUP @ SWAP   DROP ;
+\ result: z 3cells x y z
+: TEST-EXTENDS   BAZ FOO EXTENDS  BAR BAZ EXTENDS ;
+\ result: true false
