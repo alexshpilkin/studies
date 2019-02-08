@@ -95,6 +95,43 @@ Lisp "condition firewall" or give any other special treatment to
 conditions signalled inside a handler.  It's just regular code executing
 in the dynamic scope of the signaller.
 
+## OFFER and AGREE
+
+A handler does not have to perform a non-local exit, but if an error was
+signalled, it will probably want to, whether to retry the operation from
+some predetermined point, to return a substitute value from it, or to
+abort it.  The non-local control transfer provided by `THROW` and
+`CATCH` would be suitable here, were it not so indiscriminate: `THROW`
+passes control to the closest `CATCH`, and that's it.  The ability to
+list or inspect the available exits would also be useful.
+
+Thus, `OFFER` and `AGREE` implement on top of Forth `THROW` and `CATCH`
+a capability that is closer to their [Common Lisp][12] and [MACLISP][13]
+counterparts: a non-local exit established with
+`OFFER ( ... xt -- ... f )` is uniquely identified by its _exit tag_,
+which is passed to `xt` on top of the data stack, and `AGREE ( tag -* )`
+requires the tag of the exit it should take.  The stack of exits can
+also be inspected, as it is maintained as linked frames on the frame
+stack:  each exit frame has the frame address of the previous frame on
+top, and the frame address is stored in (would-be user) variable
+`OFFERS`.  An exit tag is simply the address of the corresponding exit
+frame.
+
+The actual implementation of `AGREE` is then simply `THROW`, while
+`OFFER`, on a non-local exit, compares the exit tag on top of the stack
+with the current frame address and either exits to user code or
+re`THROW`s, taking the exit frame it created off the exit stack in both
+cases.  Unfortunately, this protocol has to more or less monopolize
+`THROW` and `CATCH`.  A notable exception is cleanup code that must be
+executed every time control goes out of a protected block of code: this
+cannot be implemented with `OFFER` and `AGREE` and must instead be done
+using primitive `THROW` and `CATCH`:
+
+	protected-xt CATCH ( cleanup code ) IF THROW THEN
+
+The cleanup code cannot rely on the state of the data stack, of course,
+but things can be passed to it on the return stack instead.
+
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
 [3]:  https://opendylan.org/books/drm/Conditions
@@ -106,3 +143,5 @@ in the dynamic scope of the signaller.
 [9]:  http://soton.mpeforth.com/flag/jfar/vol3/no4/article3.pdf
 [10]: http://soton.mpeforth.com/flag/jfar/vol5/no2/article4.pdf
 [11]: http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm
+[12]: http://clhs.lisp.se/Body/s_catch.htm
+[13]: http://www.maclisp.info/pitmanual/contro.html#5.13.1

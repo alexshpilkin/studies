@@ -1,5 +1,7 @@
 \ Conditions
 
+\ From Wil Baden's TOOLBELT 2002
+: ANDIF   POSTPONE DUP POSTPONE IF POSTPONE DROP ; IMMEDIATE
 \ For backtraces in Gforth
 : NOTHROW   ['] FALSE CATCH 2DROP ;
 
@@ -40,6 +42,17 @@ VARIABLE HANDLER   FP0 HANDLER !
   F> DROP   F> HANDLER !   IF THROW THEN   NOTHROW ;
 
 : DECLINE ( fa -* )   1 @F   DUP 0 @F EXECUTE ;
+
+\ OFFER and AGREE
+
+VARIABLE OFFERS   FP0 OFFERS !
+
+: OFFER ( ... xt -- ... f )
+  OFFERS @ >F   FP@   TUCK OFFERS !   CATCH ( ... 0 | tag -1 )
+  DUP ANDIF OVER FP@ <> THEN   F> OFFERS !   IF DROP THROW THEN
+  NOTHROW   DUP IF NIP THEN ;
+
+: AGREE ( tag -* )   POSTPONE THROW ; IMMEDIATE
 
 \ Class system
 
