@@ -52,11 +52,11 @@ global storage, so that is what this part does.  It also takes the
 opportunity to save and restore the frame stack pointer, to make the
 "parallel return stack" actually track the real one.
 
-A final word of warning: my implementations of `THROW` and `CATCH` use
-ANS throw code 1 and pass through any other.  However, this is to be
-understood more as a debugging aid than a serious attempt at
-compatibility: an ANS exception passing through a condition handling
-construct will still break things.
+A final word of warning: my implementations of `THROW ( -* )` and
+`CATCH ( ... xt -- ... f )` use ANS throw code 1 and pass through any
+others.  However, this is to be understood more as a debugging aid than
+a serious attempt at compatibility: an ANS exception passing through a
+condition handling construct will still break things.
 
 ## SIGNAL, HANDLE, and DECLINE
 
