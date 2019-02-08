@@ -10,12 +10,12 @@ wrote an [in-depth discussion][6] of the issues and design choices.
 This text will instead proceed from the lowest level up, describing
 parts of the code in corresponding sections.
 
-The two first parts are essentially workarounds for inflexibilities in
-the standard.  These should be completely straightforward to implement
-with carnal knowledge of the system, but are rather awkward and
-inefficient in the portable version I give.
-
 ## Activation stack
+
+These first two parts are essentially workarounds for inflexibilities in
+ANS Forth.  These should be completely straightforward to implement with
+carnal knowledge of the system, but are rather awkward and inefficient
+in the portable version I give.
 
 In ANS Forth, it's impossible to access earlier frames on the return
 stack except by popping until the desired element.  This part implements
@@ -55,12 +55,50 @@ understood more as a debugging aid than a serious attempt at
 compatibility: an ANS exception passing through a condition handling
 construct will still break things.
 
-[1]: https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
-[2]: http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
-[3]: https://opendylan.org/books/drm/Conditions
-[4]: https://docs.racket-lang.org/reference/exns.html
-[5]: http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html
-[6]: http://www.nhplace.com/kent/Papers/Condition-Handling-2001.html
-[7]: https://www.complang.tuwien.ac.at/forth/dpans-html/dpans9.htm
-[8]: http://soton.mpeforth.com/flag/jfar/vol3/no4/article3.pdf
-[9]: http://soton.mpeforth.com/flag/jfar/vol5/no2/article4.pdf
+## SIGNAL, HANDLE, and DECLINE
+
+This part and the next one implement the logic for doing something when
+an abnormal conditional arises and for unwinding the stack if necessary.
+The general approach parallels the original [32-bit Windows SEH][10],
+though I hope my implementation is not that convoluted.
+
+When a program needs to indicate that something unusual happened, it
+puts one _or several_ items describing the situation on the data stack
+and calls `SIGNAL`.  This does not in itself relinquish control;
+instead, a callback function is called normally.  That callback can
+either perform a non-local exit or return to the signaller (in case the
+condition was only a warning and got ignored, for example).
+
+The callbacks, called _handlers_, and are installed using
+`HANDLE ( ... xt handler-xt -- ... )`.  A stack of handlers is
+maintained, and a handler can call the one up the stack using `DECLINE`.
+(I should probably specify that `DECLINE` must be in tail position or
+make it a non-local exit, but the current implementation doesn't do
+either.)  The stack of callbacks is maintained as linked frames on the
+activation stack: the handler xt is on top, and the frame address of the
+previous handler is below it.  The frame address of the top frame is
+stored in (would-be user) variable `HANDLER`, saved and restored by
+every `HANDLE` block.  When a handler is invoked, it receives the frame
+address `fa` of its own frame on the data stack on top of the
+information pushed by the signaller.  The handler can use it to retrieve
+additional data from the frame or pass it to `DECLINE ( fa -* )`.
+
+(The slightly backwards frame structure, with the handler above the
+link, is to make `SIGNAL` completely oblivious of the links.  I don't
+know if it's worth it.)
+
+Unlike other exception systems, this one does not implement the Common
+Lisp "condition firewall" or give any other special treatment to
+conditions signalled inside a handler.  It's just regular code executing
+in the dynamic scope of the signaller.
+
+[1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
+[2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
+[3]:  https://opendylan.org/books/drm/Conditions
+[4]:  https://docs.racket-lang.org/reference/exns.html
+[5]:  http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html
+[6]:  http://www.nhplace.com/kent/Papers/Condition-Handling-2001.html
+[7]:  https://www.complang.tuwien.ac.at/forth/dpans-html/dpans9.htm
+[8]:  http://soton.mpeforth.com/flag/jfar/vol3/no4/article3.pdf
+[9]:  http://soton.mpeforth.com/flag/jfar/vol5/no2/article4.pdf
+[10]: http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm

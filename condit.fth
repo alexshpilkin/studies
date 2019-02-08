@@ -1,5 +1,8 @@
 \ Conditions
 
+\ For backtraces in Gforth
+: NOTHROW   ['] FALSE CATCH 2DROP ;
+
 \ Activation stack
 
 CREATE AP0   32 CELLS ALLOT   VARIABLE AP   AP0 AP !
@@ -24,6 +27,18 @@ CREATE STASH   32 CELLS ALLOT
 : THROW ( ... -* )   DEPTH CATCHDEPTH @ - DUP STASHDEPTH !
   >R STASH BEGIN   R@ 0 > WHILE   TUCK ! CELL+   R> 1- >R REPEAT
   RDROP   1 THROW ;
+
+\ SIGNAL, HANDLE, and DECLINE
+
+VARIABLE HANDLER   AP0 HANDLER !
+
+: SIGNAL   HANDLER @    DUP 0 @A EXECUTE ;
+
+: HANDLE ( ... xt handler-xt -- ... )
+  HANDLER @ >A   >A   AP@ HANDLER !   CATCH ( ... f )
+  A> DROP   A> HANDLER !   IF THROW THEN   NOTHROW ;
+
+: DECLINE ( fa -* )   1 @A   DUP 0 @A EXECUTE ;
 
 \ Class system
 
