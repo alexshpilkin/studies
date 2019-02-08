@@ -4,11 +4,14 @@ This may be considered my response to Mitch Bradley's implied
 [challenge][1] to come up with a Forth idea that wasn't tried before (or
 at least that's how I took it... =) ).  I have tried to implement in ANS
 Forth a condition system in the vein of [Common Lisp][2], [Dylan][3],
-and [Racket][4].  The best high-level overview of the idea known to me
-is [in _Practical Common Lisp_][5], and its originator Kent Pitman also
-wrote an [in-depth discussion][6] of the issues and design choices.
+and [Racket][4].   If that seems too theoretical, the C2 wiki also
+[points out][5] that the DOS Abort/Retry/Ignore prompt is
+_unimplementable_ on top of exception systems in every modern language
+except those three.  The best high-level overview of the idea known to
+me is [in _Practical Common Lisp_][6], and its originator Kent Pitman
+also wrote an [in-depth discussion][7] of the issues and design choices.
 This text will instead proceed from the lowest level up, describing
-parts of the code in corresponding sections.
+parts of [the code](condit.fth) in corresponding sections.
 
 ## Activation stack
 
@@ -31,10 +34,10 @@ as a part of a Forth system.
 
 ## Stack-preserving THROW and CATCH
 
-It puzzles me that [`THROW` and `CATCH`][7], the only non-local control
+It puzzles me that [`THROW` and `CATCH`][8], the only non-local control
 transfers provided by ANS Forth, as well as both of the early proposals
-([`ALERT`/`EXCEPT`/`RESUME`][8] of Guy and Rayburn, which uses a more
-convenient syntax, and [`EXCEPTION`/`TRAP`][9] of Roye, which is
+([`ALERT`/`EXCEPT`/`RESUME`][9] of Guy and Rayburn, which uses a more
+convenient syntax, and [`EXCEPTION`/`TRAP`][10] of Roye, which is
 essentially `THROW`/`CATCH` by another name) insist on restoring the
 data stack pointer after a non-local exit.  This is perhaps suitable if
 they are to be used as an error-handling construct exactly as envisioned
@@ -59,7 +62,7 @@ construct will still break things.
 
 This part and the next one implement the logic for doing something when
 an abnormal conditional arises and for unwinding the stack if necessary.
-The general approach parallels the original [32-bit Windows SEH][10],
+The general approach parallels the original [32-bit Windows SEH][11],
 though I hope my implementation is not that convoluted.
 
 When a program needs to indicate that something unusual happened, it
@@ -96,9 +99,10 @@ in the dynamic scope of the signaller.
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
 [3]:  https://opendylan.org/books/drm/Conditions
 [4]:  https://docs.racket-lang.org/reference/exns.html
-[5]:  http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html
-[6]:  http://www.nhplace.com/kent/Papers/Condition-Handling-2001.html
-[7]:  https://www.complang.tuwien.ac.at/forth/dpans-html/dpans9.htm
-[8]:  http://soton.mpeforth.com/flag/jfar/vol3/no4/article3.pdf
-[9]:  http://soton.mpeforth.com/flag/jfar/vol5/no2/article4.pdf
-[10]: http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm
+[5]:  http://wiki.c2.com/?AbortRetryIgnore
+[6]:  http://www.gigamonkeys.com/book/beyond-exception-handling-conditions-and-restarts.html
+[7]:  http://www.nhplace.com/kent/Papers/Condition-Handling-2001.html
+[8]:  https://www.complang.tuwien.ac.at/forth/dpans-html/dpans9.htm
+[9]:  http://soton.mpeforth.com/flag/jfar/vol3/no4/article3.pdf
+[10]: http://soton.mpeforth.com/flag/jfar/vol5/no2/article4.pdf
+[11]: http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm
