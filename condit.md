@@ -132,6 +132,19 @@ using primitive `THROW` and `CATCH`:
 The cleanup code cannot rely on the state of the data stack, of course,
 but things can be passed to it on the return stack instead.
 
+_Obscure prior work note:_ The Common Lisp implementation of this is
+more limited, as described in [X3J13 issue EXIT-EXTENT][14].  Let an
+`OFFER` called A be established first, then inside it an `OFFER` called
+B, then inside that a cleanup `CATCH` as above called C, then let the
+code inside that `AGREE` to A, so the cleanup code of C is now
+executing.  The issue is whether that cleanup code can `AGREE` to B,
+which is closer in the call stack than the original A it is supposed to
+continue to.  Common Lisp allows systems to prohibit this (proposal
+MINIMAL in the issue writeup), but this implementation allows it
+(proposal MEDIUM).  I think this is cleaner, because exit scope is
+dynamic scope, and dynamic scope is dynamic scope is dynamic scope, but
+apparently the Common Lisp implementers disagreed.
+
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
 [3]:  https://opendylan.org/books/drm/Conditions
@@ -145,3 +158,4 @@ but things can be passed to it on the return stack instead.
 [11]: http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm
 [12]: http://clhs.lisp.se/Body/s_catch.htm
 [13]: http://www.maclisp.info/pitmanual/contro.html#5.13.1
+[14]: http://clhs.lisp.se/Issues/iss152_w.htm
