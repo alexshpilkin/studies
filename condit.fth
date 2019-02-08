@@ -1,14 +1,14 @@
 \ Conditions
 
-\ Activation stack, essentially a mirror of the return stack
+\ Activation stack
 
 CREATE AP0   32 CELLS ALLOT   VARIABLE AP   AP0 AP !
-: AP@ ( -- ap )   AP @ ;
+: AP@ ( -- fa )   AP @ ;
 : >A ( x -- )   AP @   DUP CELL+ AP !       ! ;
 : A> ( -- x )   AP @   1 CELLS - DUP AP !   @ ;
-: @A ( n ap -- x )   SWAP CELLS - @ ;
+: @A ( fa n -- x )   1+ CELLS - @ ;
 
-\ Stack-preserving THROW/CATCH in terms of ANS EXCEPTION words
+\ Stack-preserving THROW and CATCH
 
 VARIABLE CATCHDEPTH   VARIABLE STASHDEPTH
 CREATE STASH   32 CELLS ALLOT
