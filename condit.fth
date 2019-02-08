@@ -3,13 +3,13 @@
 \ For backtraces in Gforth
 : NOTHROW   ['] FALSE CATCH 2DROP ;
 
-\ Activation stack
+\ Frame stack
 
-CREATE AP0   32 CELLS ALLOT   VARIABLE AP   AP0 AP !
-: AP@ ( -- fa )   AP @ ;
-: >A ( x -- )   AP @   DUP CELL+ AP !       ! ;
-: A> ( -- x )   AP @   1 CELLS - DUP AP !   @ ;
-: @A ( fa n -- x )   1+ CELLS - @ ;
+CREATE FP0   32 CELLS ALLOT   VARIABLE FP   FP0 FP !
+: FP@ ( -- fa )   FP @ ;
+: >F ( x -- )   FP @   DUP CELL+ FP !       ! ;
+: F> ( -- x )   FP @   1 CELLS - DUP FP !   @ ;
+: @F ( fa n -- x )   1+ CELLS - @ ;
 
 \ Stack-preserving THROW and CATCH
 
@@ -17,8 +17,8 @@ VARIABLE CATCHDEPTH   VARIABLE STASHDEPTH
 CREATE STASH   32 CELLS ALLOT
 
 : CATCH ( ... xt -- ... f )
-  CATCHDEPTH @ >R   DEPTH 1- CATCHDEPTH !   AP @ >R   CATCH
-  R> AP !   R> CATCHDEPTH !   ( ... error ) DUP 1 = IF DROP
+  CATCHDEPTH @ >R   DEPTH 1- CATCHDEPTH !   FP @ >R   CATCH
+  R> FP !   R> CATCHDEPTH !   ( ... error ) DUP 1 = IF DROP
     STASHDEPTH @   DUP >R CELLS STASH + BEGIN   R@ 0 > WHILE
     1 CELLS - DUP @ SWAP   R> 1- >R REPEAT DROP   BEGIN
     R@ 0 < WHILE   DROP   R> 1+ >R REPEAT RDROP   TRUE
@@ -30,15 +30,15 @@ CREATE STASH   32 CELLS ALLOT
 
 \ SIGNAL, HANDLE, and DECLINE
 
-VARIABLE HANDLER   AP0 HANDLER !
+VARIABLE HANDLER   FP0 HANDLER !
 
-: SIGNAL   HANDLER @    DUP 0 @A EXECUTE ;
+: SIGNAL   HANDLER @    DUP 0 @F EXECUTE ;
 
 : HANDLE ( ... xt handler-xt -- ... )
-  HANDLER @ >A   >A   AP@ HANDLER !   CATCH ( ... f )
-  A> DROP   A> HANDLER !   IF THROW THEN   NOTHROW ;
+  HANDLER @ >F   >F   FP@ HANDLER !   CATCH ( ... f )
+  F> DROP   F> HANDLER !   IF THROW THEN   NOTHROW ;
 
-: DECLINE ( fa -* )   1 @A   DUP 0 @A EXECUTE ;
+: DECLINE ( fa -* )   1 @F   DUP 0 @F EXECUTE ;
 
 \ Class system
 

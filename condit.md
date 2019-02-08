@@ -28,9 +28,9 @@ address and `@A ( fa n -- )` to fetch the `n`th last cell pushed before
 `fa` was saved.   There is no supposition here that the frame address
 `fa` is in fact an address usable with the usual memory access words---
 it could just as well be an offset from `RP0`, for example.  The client
-code is also not supposed to know that the activation stack is distinct
-from the return stack, so this can be turned into actually usable code
-as a part of a Forth system.
+code is also not supposed to know that the frame stack is distinct from
+the return stack, so this can be turned into actually usable code as a
+part of a Forth system.
 
 ## Stack-preserving THROW and CATCH
 
@@ -49,8 +49,8 @@ are straightforwardly, if a tad inefficiently, implementable in terms of
 stack-preserving ones using `DEPTH`, while the opposite requires no
 small amount of contortions.  It _is_ possible, though, using auxiliary
 global storage, so that is what this part does.  It also takes the
-opportunity to save and restore the activation stack pointer, to make
-the "parallel return stack" actually track the real one.
+opportunity to save and restore the frame stack pointer, to make the
+"parallel return stack" actually track the real one.
 
 A final word of warning: my implementations of `THROW` and `CATCH` use
 ANS throw code 1 and pass through any other.  However, this is to be
@@ -78,7 +78,7 @@ maintained, and a handler can call the one up the stack using `DECLINE`.
 (I should probably specify that `DECLINE` must be in tail position or
 make it a non-local exit, but the current implementation doesn't do
 either.)  The stack of callbacks is maintained as linked frames on the
-activation stack: the handler xt is on top, and the frame address of the
+frame stack: the handler xt is on top, and the frame address of the
 previous handler is below it.  The frame address of the top frame is
 stored in (would-be user) variable `HANDLER`, saved and restored by
 every `HANDLE` block.  When a handler is invoked, it receives the frame
