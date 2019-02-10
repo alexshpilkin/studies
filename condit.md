@@ -39,10 +39,10 @@ transfers provided by ANS Forth, as well as both of the early proposals
 ([`ALERT`/`EXCEPT`/`RESUME`][9] of Guy and Rayburn, which uses a more
 convenient syntax, and [`EXCEPTION`/`TRAP`][10] of Roye, which is
 essentially `THROW`/`CATCH` by another name) insist on restoring the
-data stack pointer after a non-local exit.  This is perhaps suitable if
-they are to be used as an error-handling construct exactly as envisioned
-by the authors, but completely inappropriate if a general non-local
-control transfer is desired, as it is here.
+data stack pointer.  This is perhaps suitable if they are to be used as
+an error-handling construct exactly as envisioned by the authors, but
+completely inappropriate if an arbitrary amount of data needs to be
+passed during the transfer, as here.
 
 To add insult to injury, ANS-style stack-restoring `THROW` and `CATCH`
 are straightforwardly, if a tad inefficiently, implementable in terms of
@@ -61,18 +61,18 @@ condition handling construct will still break things.
 ## SIGNAL, HANDLE, and DECLINE
 
 This part and the next one implement the logic for doing something when
-an abnormal conditional arises and for unwinding the stack if necessary.
+an unusual situation arises and for unwinding the stack if necessary.
 The general approach parallels the original [32-bit Windows SEH][11],
 though I hope my implementation is not that convoluted.
 
 When a program needs to indicate that something unusual happened, it
 puts one _or several_ items describing the situation on the data stack
 and calls `SIGNAL`.  This does not in itself relinquish control;
-instead, a callback function is called normally.  That callback can
-either perform a non-local exit or return to the signaller (in case the
-condition was only a warning and got ignored, for example).
+instead, a callback routine is called normally.  That routine can either
+perform a non-local exit or return to the signaller (in case this was
+only a warning and it got ignored, for example).
 
-The callbacks, called _handlers_, and are installed using
+The callbacks are called _handlers_ and are installed using
 `HANDLE ( ... xt handler-xt -- ... )`.  A stack of handlers is
 maintained, and a handler can call the one up the stack using `DECLINE`.
 (I should probably specify that `DECLINE` must be in tail position or
@@ -81,9 +81,9 @@ either.)  The stack of callbacks is maintained as linked frames on the
 frame stack: the handler xt is on top, and the frame address of the
 previous handler is below it.  The frame address of the top frame is
 stored in (would-be user) variable `HANDLER`, saved and restored by
-every `HANDLE` block.  When a handler is invoked, it receives the frame
-address `fa` of its own frame on the data stack on top of the
-information pushed by the signaller.  The handler can use it to retrieve
+every `HANDLE` block.  When a handler is invoked, the address `fa` of
+its own handler frame is put on the data stack on top of the information
+provided by the signaller.  The handler can use it to retrieve
 additional data from the frame or pass it to `DECLINE ( fa -* )`.
 
 (The slightly backwards frame structure, with the handler above the
@@ -100,32 +100,31 @@ in the dynamic scope of the signaller.
 A handler does not have to perform a non-local exit, but if an error was
 signalled, it will probably want to, whether to retry the operation from
 some predetermined point, to return a substitute value from it, or to
-abort it.  The non-local control transfer provided by `THROW` and
-`CATCH` would be suitable here, were it not so indiscriminate: `THROW`
-passes control to the closest `CATCH`, and that's it.  The ability to
-list or inspect the available exits would also be useful.
+abort it.  The non-local exit provided by `THROW` and would be suitable
+here, were it not so indiscriminate: `THROW` passes control to the
+closest `CATCH`, and that's it.  The ability to list or inspect the
+available exits would also be useful.
 
 Thus, `OFFER` and `AGREE` implement on top of Forth `THROW` and `CATCH`
 a capability that is closer to their [Common Lisp][12] and [MACLISP][13]
-counterparts: a non-local exit established with
-`OFFER ( ... xt -- ... f )` is uniquely identified by its _exit tag_,
-which is passed to `xt` on top of the data stack, and `AGREE ( tag -* )`
-requires the tag of the exit it should take.  The stack of exits can
-also be inspected, as it is maintained as linked frames on the frame
-stack:  each exit frame has the frame address of the previous frame on
-top, and the frame address is stored in (would-be user) variable
-`OFFERS`.  An exit tag is simply the address of the corresponding exit
-frame.
+counterparts: an exit point established with `OFFER ( ... xt -- ... f )`
+is uniquely identified by its _offer tag_, which is passed to `xt` on
+top of the data stack, and `AGREE ( tag -* )` requires the tag of the
+exit it should take.  The offer stack can also be inspected, as it is
+maintained as linked frames on the frame stack:  each exit frame has the
+frame address of the previous frame on top, and the frame address is
+stored in (would-be user) variable `OFFERS`.  An offer tag is simply the
+address of the corresponding offer frame.
 
 The actual implementation of `AGREE` is then simply `THROW`, while
-`OFFER`, on a non-local exit, compares the exit tag on top of the stack
-with the current frame address and either exits to user code or
-re`THROW`s, taking the exit frame it created off the exit stack in both
-cases.  Unfortunately, this protocol has to more or less monopolize
+`OFFER`, after performing a `CATCH`, compares the exit tag on top of the
+data stack with the current frame address and either exits to user code
+or re`THROW`s, taking the offer frame it created off the offer stack in
+both cases.  Unfortunately, this protocol has to more or less monopolize
 `THROW` and `CATCH`.  A notable exception is cleanup code that must be
 executed every time control goes out of a protected block of code: this
 cannot be implemented with `OFFER` and `AGREE` and must instead be done
-using primitive `THROW` and `CATCH`:
+using `THROW` and `CATCH` themselves:
 
 	protected-xt CATCH ( cleanup code ) IF THROW THEN
 
@@ -134,16 +133,16 @@ but things can be passed to it on the return stack instead.
 
 _Obscure prior work note:_ The Common Lisp implementation of this is
 more limited, as described in [X3J13 issue EXIT-EXTENT][14].  Let an
-`OFFER` called A be established first, then inside it an `OFFER` called
-B, then inside that a cleanup `CATCH` as above called C, then let the
-code inside that `AGREE` to A, so the cleanup code of C is now
-executing.  The issue is whether that cleanup code can `AGREE` to B,
-which is closer in the call stack than the original A it is supposed to
-continue to.  Common Lisp allows systems to prohibit this (proposal
-MINIMAL in the issue writeup), but this implementation allows it
-(proposal MEDIUM).  I think this is cleaner, because exit scope is
-dynamic scope, and dynamic scope is dynamic scope is dynamic scope, but
-apparently the Common Lisp implementers disagreed.
+offer called A be established first, then inside it an offer called B,
+then inside that a cleanup `CATCH` as above called C, then let the code
+inside that agree to A, so the cleanup code of C is now executing.  The
+issue is whether that cleanup code can agree to B, which is closer in
+the call stack than the original A it is supposed to continue to.
+Common Lisp allows systems to prohibit this (proposal MINIMAL in the
+issue writeup), but this implementation allows it (proposal MEDIUM).  I
+think the latter is cleaner, because exit scope is dynamic scope, and
+dynamic scope is dynamic scope is dynamic scope, but apparently the
+Common Lisp implementers disagreed.
 
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
