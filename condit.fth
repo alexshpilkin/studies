@@ -58,8 +58,11 @@ VARIABLE OFFERS   FP0 OFFERS !
 
 \ Class system
 
-CREATE TOP   0 ,
-: CLASS ( c "name" -- )   CREATE HERE SWAP   DUP @ CELL+ DUP ,
-  OVER + >R   CELL+ BEGIN   DUP R@ < WHILE   DUP @ ,   CELL+
-  REPEAT DROP RDROP   , ;
-: EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT + @   = ;
+HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
+
+: CLONE ( c "name" -- )   DUP >R   CREATE HERE >R   DUP @
+  TUCK - SWAP   [ 2 CELLS ] LITERAL + DUP ,   R> + ,   BEGIN
+  DUP R@ < WHILE   DUP @ ,   CELL+ REPEAT   @ CELL+ , RDROP
+  DOES>   DUP @ + ;
+
+: EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT SWAP - @   = ;

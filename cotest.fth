@@ -53,19 +53,26 @@
 
 \ Class system
 
-TOP CLASS FOO
-: TEST-FOO   FOO DUP   DUP @ SWAP   CELL+ DUP @ SWAP   DROP ;
-\ result: x 1cells x
+: TEST-TOP   TOP DUP   DUP @ SWAP   CELL- DUP @ SWAP   DROP ;
+\ result: t 1cells t
 
-FOO CLASS BAR
-: TEST-BAR   BAR DUP   DUP @ SWAP   CELL+ DUP @ SWAP
-  CELL+ DUP @ SWAP   DROP ;
-\ result: y 2cells x y
+: >FROB   CELL+ ;
+TOP CLONE FOO   2 ,
+: TEST-FOO   FOO DUP   DUP @ SWAP   CELL- DUP @ SWAP
+  CELL- DUP @ SWAP   DROP   FOO >FROB @ ;
+\ result: x 2cells t x 2
 
-BAR CLASS BAZ
-: TEST-BAZ   BAZ DUP   DUP @ SWAP   CELL+ DUP @ SWAP
-  CELL+ DUP @ SWAP   CELL+ DUP @ SWAP   DROP ;
-\ result: z 3cells x y z
+FOO CLONE BAR   57 ,
+: TEST-BAR   BAR DUP   DUP @ SWAP   CELL- DUP @ SWAP
+  CELL- DUP @ SWAP   CELL- DUP @ SWAP   DROP   BAR >FROB @ ;
+\ result: y 3cells t x y 57
 
-: TEST-EXTENDS   BAZ FOO EXTENDS  BAR BAZ EXTENDS ;
-\ result: true false
+BAR CLONE BAZ   179 ,
+: TEST-BAZ   BAZ DUP   DUP @ SWAP   CELL- DUP @ SWAP
+  CELL- DUP @ SWAP   CELL- DUP @ SWAP   CELL- DUP @ SWAP
+  DROP   BAZ >FROB @ ;
+\ result: z 4cells t x y z 179
+
+: TEST-EXTENDS   FOO TOP EXTENDS   BAZ FOO EXTENDS
+  BAR BAZ EXTENDS ;
+\ result: true true false
