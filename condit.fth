@@ -1,5 +1,7 @@
 \ Conditions
 
+\ For symmetry with CELL+
+: CELL-   [ 1 CELLS ] LITERAL - ;
 \ From Wil Baden's TOOLBELT 2002
 : ANDIF   POSTPONE DUP POSTPONE IF POSTPONE DROP ; IMMEDIATE
 \ For backtraces in Gforth
@@ -9,8 +11,8 @@
 
 CREATE FP0   32 CELLS ALLOT   VARIABLE FP   FP0 FP !
 : FP@ ( -- fa )   FP @ ;
-: >F ( x -- )   FP @   DUP CELL+ FP !       ! ;
-: F> ( -- x )   FP @   1 CELLS - DUP FP !   @ ;
+: >F ( x -- )   FP @   DUP CELL+ FP !   ! ;
+: F> ( -- x )   FP @   CELL- DUP FP !   @ ;
 : @F ( fa n -- x )   1+ CELLS - @ ;
 
 \ Stack-preserving THROW and CATCH
@@ -27,7 +29,7 @@ CREATE STASH   32 CELLS ALLOT
   CATCHDEPTH @ >R   DEPTH 1- CATCHDEPTH !   FP @ >R   CATCH
   R> FP !   R> CATCHDEPTH !   ( ... error ) DUP 1 = IF DROP
     STASHDEPTH @   DUP >R CELLS STASH + BEGIN   R@ 0 > WHILE
-    1 CELLS - DUP @ SWAP   R> 1- >R REPEAT DROP   BEGIN
+    CELL- DUP @ SWAP   R> 1- >R REPEAT DROP   BEGIN
     R@ 0 < WHILE   DROP   R> 1+ >R REPEAT RDROP   TRUE
   ELSE   DUP IF THROW THEN   THEN ;
 
