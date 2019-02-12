@@ -144,6 +144,60 @@ think the latter is cleaner, because exit scope is dynamic scope, and
 dynamic scope is dynamic scope is dynamic scope, but apparently the
 Common Lisp implementers disagreed.
 
+## Class system
+
+What is implemented up to this point is not a complete condition system,
+but only a foundation for one: while there is a mechanism for handlers
+to receive data about a condition and accept or decline to handle it,
+there is no agreed protocol for doing so.  Similarly, while there is a
+way to enumerate available exit points and their associated information
+and to exit to a chosen one, possibly passing some data on the stack,
+there is no protocol for performing the choice.  This is what remains
+to be done: in [SysV ABI terms][15], the "personality".
+
+Following usual terminology, I call unusual situations that are handled
+by the system _conditions_, and the offers giving ways of recovery from
+those situations _restarts_.  Condition information is put on the data
+stack before calling `SIGNAL`, and each handler uses the contents of its
+frame to decide whether to accept or `DECLINE`.  Similarly, handler code
+that wishes to recover can walk the offer frames and use the data there
+to select the desired restart, then put any recovery information on the
+data stack alongside the tag before invoking it using `OFFER`.  In both
+cases, more specific information should be placed below less specific,
+so that the handler or restart code can still work even if it is only
+prepared to handle a less specific kind of condition or restart.
+
+What we need, then, is a way of organizing the various kinds of
+conditions and restarts in a hierarchy by specificity.  After thinking
+about this for some time, I couldn't come up with anything better than
+just doing a simple single-inheritance, [prototype-based][16] object
+system.  The way it is used is a bit unusual, though: the objects are
+statically allocated and represent not the conditions or restarts
+themselves, but the kinds of condition or restart, so I call it a class
+system instead of an object system.
+
+To signal a particular condition, put the data corresponding to that
+condition on the data stack, topped off by the condition class, then
+execute `SIGNAL`.  The innermost handler for which the signalled
+condition class `EXTENDS` the handled one will accept.  The protocol
+for restarts is similar and will be described later.
+
+We see that very little is required of classes: we must be able to tell
+whether one class `EXTENDS` another one, and strictly speaking that's
+it.  I've also included rudimentary support for _slots_, that is, values
+associated with a class that can be overriden by an extending class.  A
+slot that stores an xt can be used like a method in a traditional object
+system.  When used in a condition or restart class, methods will want to
+inspect the data left below the class itself, but, contrary to the usual
+Forth convention, they should _not_ consume it: a method cannot know if
+there are more items on the stack than it expects, and the user cannot
+know how many items a method expects, unless they know in advance what
+the exact class is, which would defeat the point of classes.
+
+(Of course, there could be a standard `DUPLICATE` method or a `SIZE`
+slot.  I don't think that would improve things compared to just not
+consuming the data.)
+
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
 [3]:  https://opendylan.org/books/drm/Conditions
@@ -158,3 +212,5 @@ Common Lisp implementers disagreed.
 [12]: http://clhs.lisp.se/Body/s_catch.htm
 [13]: http://www.maclisp.info/pitmanual/contro.html#5.13.1
 [14]: http://clhs.lisp.se/Issues/iss152_w.htm
+[15]: https://stackoverflow.com/q/16597350
+[16]: http://wiki.c2.com/?PrototypeBasedProgramming
