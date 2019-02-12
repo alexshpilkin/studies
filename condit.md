@@ -13,7 +13,7 @@ also wrote an [in-depth discussion][7] of the issues and design choices.
 This text will instead proceed from the lowest level up, describing
 parts of [the code](condit.fth) in corresponding sections.
 
-## Activation stack
+## Frame stack
 
 These first two parts are essentially workarounds for inflexibilities in
 ANS Forth.  These should be completely straightforward to implement with
@@ -22,9 +22,9 @@ in the portable version I give.
 
 In ANS Forth, it's impossible to access earlier frames on the return
 stack except by popping until the desired element.  This part implements
-what's essentially a parallel return stack, with `>A` and `A>` in place
-of `>R` and `R>`, but also `AP@ ( -- fa )` to save the current frame
-address and `@A ( fa n -- )` to fetch the `n`th last cell pushed before
+what's essentially a parallel return stack, with `>F` and `F>` in place
+of `>R` and `R>`, but also `FP@ ( -- fa )` to save the current frame
+address and `@F ( fa n -- )` to fetch the `n`th last cell pushed before
 `fa` was saved.   There is no supposition here that the frame address
 `fa` is in fact an address usable with the usual memory access words---
 it could just as well be an offset from `RP0`, for example.  The client
