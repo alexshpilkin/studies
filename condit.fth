@@ -10,10 +10,10 @@
 \ Frame stack
 
 CREATE FP0   32 CELLS ALLOT   VARIABLE FP   FP0 FP !
-: FP@ ( -- fa )   FP @ ;
+: FP@ ( -- fp )   FP @ ;
 : >F ( x -- )   FP @   DUP CELL+ FP !   ! ;
 : F> ( -- x )   FP @   CELL- DUP FP !   @ ;
-: @F ( fa n -- x )   1+ CELLS - @ ;
+: @F ( fp n -- x )   1+ CELLS - @ ;
 
 \ Stack-preserving THROW and CATCH
 
@@ -33,28 +33,30 @@ CREATE STASH   32 CELLS ALLOT
     R@ 0 < WHILE   DROP   R> 1+ >R REPEAT RDROP   TRUE
   ELSE   DUP IF THROW THEN   THEN ;
 
-\ SIGNAL, HANDLE, and DECLINE
 
-VARIABLE HANDLER   FP0 HANDLER !
+\ SIGNAL, RESPOND, and PASS
 
-: SIGNAL   HANDLER @    DUP 0 @F EXECUTE ;
+VARIABLE RESPONSE   FP0 RESPONSE !
 
-: HANDLE ( ... xt handler-xt -- ... )
-  HANDLER @ >F   >F   FP@ HANDLER !   CATCH ( ... f )
-  F> DROP   F> HANDLER !   IF THROW THEN   NOTHROW ;
+: SIGNAL   RESPONSE @    DUP 0 @F EXECUTE ;
 
-: DECLINE ( fa -* )   1 @F   DUP 0 @F EXECUTE ;
+: RESPOND ( ... xt response-xt -- ... )
+  RESPONSE @ >F   >F   FP@ RESPONSE !   CATCH ( ... f )
+  F> DROP   F> RESPONSE !   IF THROW THEN   NOTHROW ;
+
+: (PASS)   1 @F   DUP 0 @F EXECUTE ;
+: PASS ( rf -* )   POSTPONE (PASS) POSTPONE EXIT ; IMMEDIATE
 
 \ OFFER and AGREE
 
 VARIABLE OFFERS   FP0 OFFERS !
 
 : OFFER ( ... xt -- ... f )
-  OFFERS @ >F   FP@   TUCK OFFERS !   CATCH ( ... 0 | tag -1 )
+  OFFERS @ >F   FP@   TUCK OFFERS !   CATCH ( ... 0 | of -1 )
   DUP ANDIF OVER FP@ <> THEN   F> OFFERS !   IF DROP THROW THEN
   NOTHROW   DUP IF NIP THEN ;
 
-: AGREE ( tag -* )   POSTPONE THROW ; IMMEDIATE
+: AGREE ( of -* )   POSTPONE THROW ; IMMEDIATE
 
 \ Class system
 
