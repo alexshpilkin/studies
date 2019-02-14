@@ -1,4 +1,4 @@
-# Conditions and restarts in ANS Forth
+# Conditions and restarts
 
 This may be considered my response to Mitch Bradley's implied
 [challenge][1] to come up with a Forth idea that wasn't tried before (or
