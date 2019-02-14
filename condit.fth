@@ -1,4 +1,4 @@
-\ Conditions
+\ Conditions and restarts
 
 \ For symmetry with CELL+
 : CELL-   [ 1 CELLS ] LITERAL - ;
@@ -37,7 +37,7 @@ CREATE STASH   32 CELLS ALLOT
 
 \ SIGNAL, RESPOND, and PASS
 
-VARIABLE RESPONSE   FP0 RESPONSE !
+VARIABLE RESPONSE
 
 : SIGNAL   RESPONSE @    DUP 0 @F EXECUTE ;
 
@@ -69,3 +69,22 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
   DOES>   DUP @ + ;
 
 : EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT SWAP - @   = ;
+
+: METHOD ( xt "name" -- )   CREATE , DOES> @ EXECUTE @ EXECUTE ;
+
+\ Conditions
+
+: FILTER ( ... c fp -- ... )   2DUP 2 @F EXTENDS IF
+  DUP 3 @F EXECUTE   ELSE   PASS   THEN ;
+: HANDLE ( xt c -- xt )   SWAP >F >F   ['] FILTER RESPOND
+  F> DROP F> DROP ;
+
+: >UNHANDLED   CELL+ ;   ' >UNHANDLED METHOD UNHANDLED
+: DEFAULT-RESPONSE   ( с rf ) DROP UNHANDLED ;
+' DEFAULT-RESPONSE >F   FP@ RESPONSE !
+
+: >PRINT   [ 2 CELLS ] LITERAL + ;   ' >PRINT METHOD PRINT
+
+: UNHANDLED-?   ." Unhandled " PRINT ABORT ;
+: PRINT-?   ." unspecified error " ;
+TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,

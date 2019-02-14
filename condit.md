@@ -1,4 +1,4 @@
-# Conditions in ANS Forth
+# Conditions and restarts in ANS Forth
 
 This may be considered my response to Mitch Bradley's implied
 [challenge][1] to come up with a Forth idea that wasn't tried before (or
@@ -197,6 +197,51 @@ the exact class is, which would defeat the point of classes.
 (Of course, there could be a standard `DUPLICATE` method or a `SIZE`
 slot.  I don't think that would improve things compared to just not
 consuming the data.)
+
+## Conditions
+
+The protocol for signalling conditions has already been described above:
+put the condition data and condition class on the stack, then call
+`SIGNAL`.  To handle subclasses of a class `c` using `handler-xt` during
+execution of `xt`, call `HANDLE ( ... xt handler-xt c -- ... )`.  The
+handler receives the pointer to its own frame on top of the class;  the
+last cell put on the frame stack before `HANDLE` is accessible using
+`4 @F` (and so on for earlier cells).  Returning from the handler causes
+execution to resume after `SIGNAL`.
+
+Slot 1 (or `>UNHANDLED`) of every condition specifies the default
+handler for that condition, that will be executed if no handler on the
+stack accepts responsibility for it.  The default handler, unlike the
+usual ones, is invoked with the condition class on top of the stack.
+Slot 2 (`>PRINT`) should contain the xt that prints the condition data
+on the console in a user-readable form (leaving the stack intact).
+Additionally, the description of every condition should specify whether
+a handler is allowed to return or whether it has to invoke a restart.
+
+The base class for errors is `?`.  Any concrete error classes should
+have names ending with `?` and describing the object or action that
+encountered a problem, not the problem itself, because there is usually
+less arbitrary choice in naming the former: for example, `I/O?`, not
+`I/O-ERROR?`; `NAME?`, not `NAME-NOT-FOUND?`.
+
+## Further work
+
+* The slot layout is too fragile, but I don't see how to improve things
+  without making the system much more complex.
+
+* I do not know how to frame pointers should be passed around.  Wrapping
+  code like `FILTER` might want to consume the relevant data on the
+  frame and advance the frame pointer it passes to underlying code to
+  point lower on the stack.  This probably composes better, but means
+  that, for example, a handler will not be able to call `PASS`.
+
+* The set of methods on a condition class is a sketch.  Unfortunately,
+  no methods can be added to a class once it has been defined, so things
+  like `PRINT` will have to be baked in.
+
+* The condition hierarchy needs to be worked out.  There need to be base
+  classes for warnings, programming errors (as a special case of errors),
+  implementation limitations.
 
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
