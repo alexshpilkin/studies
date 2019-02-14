@@ -23,7 +23,7 @@ CREATE STASH   32 CELLS ALLOT
 
 : THROW ( -* )
   DEPTH CATCHDEPTH @ - DUP STASHDEPTH !   >R STASH BEGIN
-  R@ 0 > WHILE   TUCK ! CELL+   R> 1- >R REPEAT  RDROP
+  R@ 0 > WHILE   TUCK ! CELL+   R> 1- >R REPEAT   DROP R> DROP
   1 THROW ;
 
 : CATCH ( ... xt -- ... f )
@@ -31,7 +31,7 @@ CREATE STASH   32 CELLS ALLOT
   R> FP !   R> CATCHDEPTH !   ( ... error ) DUP 1 = IF DROP
     STASHDEPTH @   DUP >R CELLS STASH + BEGIN   R@ 0 > WHILE
     CELL- DUP @ SWAP   R> 1- >R REPEAT DROP   BEGIN
-    R@ 0 < WHILE   DROP   R> 1+ >R REPEAT RDROP   TRUE
+    R@ 0 < WHILE   DROP   R> 1+ >R REPEAT R> DROP   TRUE
   ELSE   DUP IF THROW THEN   THEN ;
 
 
@@ -65,7 +65,7 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 
 : CLONE ( c "name" -- )   DUP >R   CREATE HERE >R   DUP @
   TUCK - SWAP   [ 2 CELLS ] LITERAL + DUP ,   R> + ,   BEGIN
-  DUP R@ < WHILE   DUP @ ,   CELL+ REPEAT   @ CELL+ , RDROP
+  DUP R@ < WHILE   DUP @ ,   CELL+ REPEAT   @ CELL+ , R> DROP
   DOES>   DUP @ + ;
 
 : EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT SWAP - @   = ;
