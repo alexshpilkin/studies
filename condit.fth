@@ -9,11 +9,12 @@
 
 \ Frame stack
 
-CREATE FP0   32 CELLS ALLOT   VARIABLE FP   FP0 FP !
+CREATE FSTACK   32 CELLS ALLOT   FSTACK CELL- CONSTANT FP0
+VARIABLE FP   FP0 FP !
 : FP@ ( -- fp )   FP @ ;
-: >F ( x -- )   FP @   DUP CELL+ FP !   ! ;
-: F> ( -- x )   FP @   CELL- DUP FP !   @ ;
-: @F ( fp n -- x )   1+ CELLS - @ ;
+: >F ( x -- )   FP @   CELL+ DUP FP !   ! ;
+: F> ( -- x )   FP @   DUP CELL- FP !   @ ;
+: @F ( fp n -- x )   CELLS - @ ;
 
 \ Stack-preserving THROW and CATCH
 
