@@ -52,6 +52,10 @@ global storage, so that is what this part does.  It also takes the
 opportunity to save and restore the frame pointer, to make the "parallel
 return stack" actually track the real one.
 
+The data stack depth can be saved on the return stack and restored back
+manually by `MARK` and `TRIM`, but only if it has become greater in the
+meantime.
+
 A final word of warning: my implementations of `THROW ( -* )` and
 `CATCH ( ... xt -- ... f )` use ANS throw code 1 and pass through any
 others.  However, this is to be understood more as a debugging aid than
