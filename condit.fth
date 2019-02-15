@@ -34,6 +34,9 @@ CREATE STASH   32 CELLS ALLOT
     R@ 0 < WHILE   DROP   R> 1+ >R REPEAT R> DROP   TRUE
   ELSE   DUP IF THROW THEN   THEN ;
 
+: MARK   DEPTH >F ;
+: TRIM   F> >R   BEGIN DEPTH R@ U> WHILE DROP REPEAT   R> DROP ;
+
 \ SIGNAL, RESPOND, and PASS
 
 VARIABLE RESPONSE
@@ -88,3 +91,16 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 : UNHANDLED-?   ." Unhandled " PRINT ABORT ;
 : PRINT-?   ." unspecified error " ;
 TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,
+
+\ Restarts
+
+: (PROPOSE)   ( xt of ) DROP EXECUTE ;
+: PROPOSE ( ... xt c -- ... )   >F ['] (PROPOSE) OFFER F> DROP ;
+
+: PRINT-RESTART?   ." error: absent restart " >R PRINT R> ;
+? CLONE RESTART? ( ... c -- restart? )
+  ? >UNHANDLED @ , ' PRINT-RESTART? ,
+
+: INVOKE ( ... c -* )   >R   OFFERS @ BEGIN   DUP FP0 <> WHILE
+  R@ OVER 1 @F EXTENDS   IF R> SWAP THROW THEN   0 @F REPEAT
+  R> RESTART? SIGNAL ;

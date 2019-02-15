@@ -224,6 +224,18 @@ encountered a problem, not the problem itself, because there is usually
 less arbitrary choice in naming the former: for example, `I/O?`, not
 `I/O-ERROR?`; `NAME?`, not `NAME-NOT-FOUND?`.
 
+## Example
+
+This final part demonstrates a DOS-style Abort/Retry/Ignore prompt,
+with even more modularity than in DOS: the simulated `SYSTEM` provides
+the prompt, but has no knowledge of the available recovery options; the
+simulated `SHELL` and I/O subsystem provide the options, and the
+simulated `APPLICATION` has no knowledge of either.  A serious attempt
+at an interactive debugger would probably look a lot like `SYSTEM`,
+except it could use system-specific knowledge to implement a full REPL
+for the user to inspect the system.  Alternatively, the list of restarts
+could be incorporated into the a return stack trace.
+
 ## Further work
 
 * The slot layout is too fragile, but I don't see how to improve things
