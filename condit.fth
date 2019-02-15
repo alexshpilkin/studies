@@ -34,7 +34,6 @@ CREATE STASH   32 CELLS ALLOT
     R@ 0 < WHILE   DROP   R> 1+ >R REPEAT R> DROP   TRUE
   ELSE   DUP IF THROW THEN   THEN ;
 
-
 \ SIGNAL, RESPOND, and PASS
 
 VARIABLE RESPONSE
@@ -70,7 +69,8 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 
 : EXTENDS ( c1 c2 -- )   OVER @ OVER @ MIN   ROT SWAP - @   = ;
 
-: METHOD ( xt "name" -- )   CREATE , DOES> @ EXECUTE @ EXECUTE ;
+: METHOD ( xt "name" -- ) ( ... c -- ... c )
+  CREATE ,   DOES>   >R DUP R> @ EXECUTE @ EXECUTE ;
 
 \ Conditions
 
