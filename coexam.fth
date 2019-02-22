@@ -40,16 +40,16 @@ TOP CLONE ABORT?   RESTART? >UNHANDLED @ , RESTART? >PRINT @ ,
 
 : SHELL
   MARK
-  ['] APPLICATION ABORT? RESTART IF ." Aborted " THEN CR
+  ['] APPLICATION ABORT? RESTART IF ." Aborted " CR THEN
   TRIM ;
 
 : SYSTEM
-  ['] SHELL [:
+  ['] SHELL ? [:
     ( hf ) DROP
     ." Signalled " PRINT CR   ." Restarts:" CR   RESTARTS @
     BEGIN   DUP FP0 <> WHILE   DUP 1 @F   2 SPACES
     DUP >NAME 2@ TYPE ."  -- " DESCRIBE CR   DROP
     0 @F REPEAT DROP   PAD DUP 84 ACCEPT CR   EVALUATE SIGNAL
-  ;] ? HANDLE ;
+  ;] HANDLE ;
 
 CR SYSTEM

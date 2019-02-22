@@ -83,7 +83,7 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 
 : (HANDLE) ( ... c fp -- ... )   2DUP 2 @F EXTENDS IF
   DUP 3 @F EXECUTE   ELSE   PASS   THEN ;
-: HANDLE ( ... xt handler-xt c -- ... )   SWAP >F >F
+: HANDLE ( ... xt c handler-xt -- ... )   >F >F
   ['] (HANDLE) RESPOND   F> DROP F> DROP ;
 
 1 CELLS +CONSTANT >UNHANDLED   ' >UNHANDLED METHOD UNHANDLED
@@ -100,7 +100,7 @@ TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,
 
 : ((UNWIND)) ( ... c hf -* )   4 @F ESCAPE ;
 : (UNWIND) ( ... xt c tag -- ... )
-  >F   ['] ((UNWIND)) SWAP HANDLE   F> DROP ;
+  >F   ['] ((UNWIND)) HANDLE   F> DROP ;
 : UNWIND ( ... xt c -- ... f )   ['] (UNWIND) RESUME ;
 
 VARIABLE RESTARTS   FP0 RESTARTS !
