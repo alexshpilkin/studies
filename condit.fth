@@ -105,7 +105,7 @@ TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,
 
 VARIABLE RESTARTS   FP0 RESTARTS !
 
-: RESTART ( ... xt c -- ... )
+: RESTART ( ... xt c -- ... f )
   DUP >F   RESTARTS @ >F   FP@ RESTARTS !   UNWIND
   F> RESTARTS !   F> DROP ;
 
