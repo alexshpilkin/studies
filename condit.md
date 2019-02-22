@@ -79,7 +79,7 @@ only a warning and it got ignored, for example).
 The callbacks are called _responses_ and are installed using
 `RESPOND (... xt response-xt -- ... )`.  A stack of responses is
 maintained, and a response can give up and call the one up the stack
-using `PASS`.  (In a real implementation `PASS` should do a tail call.)
+using `PASS`.  (In a real implementation `PASS` would do a tail call.)
 The stack of callbacks is maintained as linked frames on the frame
 stack: the response xt is on top, and the pointer to the previous
 response frame is below it.  The pointer to the top frame is stored in
@@ -98,35 +98,30 @@ Unlike other systems, this one does not implement the Common Lisp
 inside a response.  A response just regular code executing in the
 dynamic scope of the signaller.
 
-## OFFER and AGREE
+## ESCAPE and RESUME
 
 A response does not have to perform a non-local exit, but if an error
 was signalled, it will probably want to, whether to retry the operation
 from some predetermined point, to return a substitute value from it, or
 to abort it.  The non-local exit provided by `THROW` and would be
 suitable here, were it not so indiscriminate: `THROW` passes control to
-the closest `CATCH`, and that's it.  The ability to list or inspect the
-available exits would also be useful.
+the closest `CATCH`, and that's it.
 
-Thus, `OFFER` and `AGREE` implement on top of Forth `THROW` and `CATCH`
-a capability that is closer to their [Common Lisp][12] and [MACLISP][13]
-counterparts: an exit point established with `OFFER ( ... xt -- ... f )`
-is uniquely identified by its _offer tag_, which is passed to `xt` on
-top of the data stack, and `AGREE ( of -* )` requires the tag of the
-exit it should take.  The offer stack can also be inspected, as it is
-maintained as linked frames on the frame stack: each exit frame has the
-pointer to the previous frame on top, and the pointer to the top frame
-is stored in (would-be user) variable `OFFERS`.  An offer tag `of` is
-simply the pointer to the corresponding offer frame.
+Thus, `ESCAPE` and `RESUME` implement on top of Forth `THROW` and
+`CATCH` a capability that is closer to their [Common Lisp][12] and
+[MACLISP][13] counterparts: an exit point established with
+`RESUME ( ... xt -- ... f )` is uniquely identified by its _tag_, which
+is passed to `xt` on top of the data stack, and `ESCAPE ( tag -* )`
+requires the tag of the exit it should take.
 
-The actual implementation of `AGREE` is then simply `THROW`, while
-`OFFER`, after performing a `CATCH`, compares the offer tag on top of
-the data stack with the current frame address and either exits to user
-code or re`THROW`s, taking the offer frame it created off the offer
-stack in both cases.  Unfortunately, this protocol has to more or less
+The tag is implemented as the frame pointer at the moment `RESUME` is
+entered.  The actual implementation of `ESCAPE` is then simply `THROW`,
+while `RESUME`, after performing a `CATCH`, compares the tag on top of
+the data stack with the current frame pointer and either exits to user
+code or re`THROW`s.  Unfortunately, this protocol has to more or less
 monopolize `THROW` and `CATCH`.  A notable exception is cleanup code
 that must be executed every time control goes out of a protected block
-of code: this cannot be implemented with `OFFER` and `AGREE` and must
+of code: this cannot be implemented with `ESCAPE` and `RESUME` and must
 instead be done using `THROW` and `CATCH` themselves:
 
 	protected-xt CATCH ( cleanup code ) IF THROW THEN
@@ -135,12 +130,12 @@ The cleanup code cannot rely on the state of the data stack, of course,
 but things can be passed to it on the return stack instead.
 
 _Obscure prior work note:_ The Common Lisp implementation of this is
-more limited, as described in [X3J13 issue EXIT-EXTENT][14].  Let an
-offer called A be established first, then inside it an offer called B,
-then inside that a cleanup `CATCH` as above called C, then let the code
-inside that agree to A, so the cleanup code of C is now executing.  The
-issue is whether that cleanup code can agree to B, which is closer in
-the call stack than the original A it is supposed to continue to.
+more limited, as described in [X3J13 issue EXIT-EXTENT][14].  Let a
+`RESUME` called A be established first, then inside it a `RESUME` called
+B, then inside that a cleanup `CATCH` as above called C, then let the
+code inside that escape to A, so the cleanup code of C is now executing.
+The issue is whether that cleanup code can escape to B, which is closer
+in the call stack than the original A it is supposed to continue to.
 Common Lisp allows systems to prohibit this (proposal MINIMAL in the
 issue writeup), but this implementation allows it (proposal MEDIUM).  I
 think the latter is cleaner, because exit scope is dynamic scope, and
@@ -153,23 +148,20 @@ What is implemented up to this point is not a complete condition system,
 but only a foundation for one: while there is a mechanism to receive
 data about an unusual situation and accept or decline to handle it,
 there is no agreed protocol for doing so.  Similarly, while there is a
-way to enumerate available exit points and their associated information
-and to exit to a chosen one, possibly passing some data on the stack,
-there is no protocol for performing the choice.  This is what remains to
-be done: in [SysV ABI terms][15], the "personality".
+way to escape to a chosen resumption point, possibly passing some data
+on the stack, there is no protocol for performing the choice.  This is
+what remains to be done: in [SysV ABI terms][15], the "personality".
 
 Following common terminology, I call unusual situations that are handled
 by the system _conditions_, the responses to them _handlers_, and the
-offers giving ways of recovery from those situations _restarts_.
-Condition information is put on the data stack before calling `SIGNAL`,
-and each handler uses the contents of its frame to decide whether to
-handle or `PASS`.  Similarly, handler code that wishes to recover can
-walk the offer frames and use the data there to select the desired
-restart, then put any recovery information on the data stack alongside
-the tag before invoking it using `OFFER`.  In both cases, more specific
-information should be placed below less specific, so that the handler or
-restart code can still work even if it is only prepared to handle a less
-specific kind of condition or restart.
+ways of recovery from those situations _restarts_.  Condition data
+is put on the data stack before calling `SIGNAL`, and each handler uses
+the contents of its frame to decide whether to handle or `PASS`.  A
+restart is simply a condition whose handler, by convention, immediately
+escapes to the restart code, leaving the restart data intact on the data
+stack.  In both cases, more specific data should be placed below less
+specific, so that the handler or restart code can still work even if it
+is only prepared to handle a less specific kind of condition or restart.
 
 What we need, then, is a way of organizing the various kinds of
 conditions and restarts in a hierarchy by specificity.  After thinking
@@ -202,7 +194,7 @@ the exact class is, which would defeat the point of classes.
 slot.  I don't think that would improve things compared to just not
 consuming the data.)
 
-## Conditions
+## HANDLE
 
 The protocol for signalling conditions has already been described above:
 put the condition data and condition class on the stack, then call
@@ -240,13 +232,13 @@ except it could use system-specific knowledge to implement a full REPL
 for the user to inspect the system.  Alternatively, the list of restarts
 could be incorporated into the a return stack trace.
 
-## Further work
+## Design issues
 
 * The slot layout is too fragile, but I don't see how to improve things
   without making the system much more complex.
 
 * I do not know how to frame pointers should be passed around.  Wrapping
-  code like `FILTER` might want to consume the relevant data on the
+  code like `(HANDLE)` might want to consume the relevant data on the
   frame and advance the frame pointer it passes to underlying code to
   point lower on the stack.  This probably composes better, but means
   that, for example, a handler will not be able to call `PASS`.

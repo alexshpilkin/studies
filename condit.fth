@@ -2,6 +2,10 @@
 
 \ For symmetry with CELL+
 : CELL-   [ 1 CELLS ] LITERAL - ;
+\ From folklore
+: +CONSTANT   CREATE , DOES> @ + ;
+\ From folklore
+: ,"   [CHAR] " PARSE   HERE   OVER ALLOT   SWAP CMOVE ;
 \ From Wil Baden's TOOLBELT 2002
 : ANDIF   POSTPONE DUP POSTPONE IF POSTPONE DROP ; IMMEDIATE
 \ For backtraces in Gforth
@@ -51,16 +55,15 @@ VARIABLE RESPONSE
 : (PASS)   1 @F   DUP 0 @F EXECUTE ;
 : PASS ( rf -* )   POSTPONE (PASS) POSTPONE EXIT ; IMMEDIATE
 
-\ OFFER and AGREE
+\ ESCAPE and RESUME
 
-VARIABLE OFFERS   FP0 OFFERS !
+: ESCAPE ( tag -* )   POSTPONE THROW ; IMMEDIATE
 
-: OFFER ( ... xt -- ... f )
-  OFFERS @ >F   FP@   TUCK OFFERS !   CATCH ( ... 0 | of -1 )
-  DUP ANDIF OVER FP@ <> THEN   F> OFFERS !   IF DROP THROW THEN
-  NOTHROW   DUP IF NIP THEN ;
-
-: AGREE ( of -* )   POSTPONE THROW ; IMMEDIATE
+: RESUME ( ... xt -- ... f )
+  FP@ SWAP   0 >F   CATCH ( ... 0 | tag -1 )   F> DROP
+  DUP ANDIF OVER FP@ <> THEN   IF DROP THROW THEN   NOTHROW
+  DUP IF NIP THEN ;
+  ( the 0 ensures different RESUMEs have different tags )
 
 \ Class system
 
@@ -76,32 +79,41 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 : METHOD ( xt "name" -- ) ( ... c -- ... c )
   CREATE ,   DOES>   >R DUP R> @ EXECUTE @ EXECUTE ;
 
-\ Conditions
+\ HANDLE
 
-: FILTER ( ... c fp -- ... )   2DUP 2 @F EXTENDS IF
+: (HANDLE) ( ... c fp -- ... )   2DUP 2 @F EXTENDS IF
   DUP 3 @F EXECUTE   ELSE   PASS   THEN ;
-: HANDLE ( xt c -- xt )   SWAP >F >F   ['] FILTER RESPOND
-  F> DROP F> DROP ;
+: HANDLE ( ... xt handler-xt c -- ... )   SWAP >F >F
+  ['] (HANDLE) RESPOND   F> DROP F> DROP ;
 
-: >UNHANDLED   CELL+ ;   ' >UNHANDLED METHOD UNHANDLED
+1 CELLS +CONSTANT >UNHANDLED   ' >UNHANDLED METHOD UNHANDLED
+2 CELLS +CONSTANT >PRINT   ' >PRINT METHOD PRINT
+
 : DEFAULT-RESPONSE   ( с rf ) DROP UNHANDLED ;
 ' DEFAULT-RESPONSE >F   FP@ RESPONSE !
-
-: >PRINT   [ 2 CELLS ] LITERAL + ;   ' >PRINT METHOD PRINT
 
 : UNHANDLED-?   ." Unhandled " PRINT ABORT ;
 : PRINT-?   ." unspecified error " ;
 TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,
 
-\ Restarts
+\ UNWIND and RESTART
 
-: (PROPOSE)   ( xt of ) DROP EXECUTE ;
-: PROPOSE ( ... xt c -- ... )   >F ['] (PROPOSE) OFFER F> DROP ;
+: ((UNWIND)) ( ... c hf -* )   4 @F ESCAPE ;
+: (UNWIND) ( ... xt c tag -- ... )
+  >F   ['] ((UNWIND)) SWAP HANDLE   F> DROP ;
+: UNWIND ( ... xt c -- ... f )   ['] (UNWIND) RESUME ;
 
-: PRINT-RESTART?   ." error: absent restart " >R PRINT R> ;
-? CLONE RESTART? ( ... c -- restart? )
-  ? >UNHANDLED @ , ' PRINT-RESTART? ,
+VARIABLE RESTARTS   FP0 RESTARTS !
 
-: INVOKE ( ... c -* )   >R   OFFERS @ BEGIN   DUP FP0 <> WHILE
-  R@ OVER 1 @F EXTENDS   IF R> SWAP THROW THEN   0 @F REPEAT
-  R> RESTART? SIGNAL ;
+: RESTART ( ... xt c -- ... )
+  DUP >F   RESTARTS @ >F   FP@ RESTARTS !   UNWIND
+  F> RESTARTS !   F> DROP ;
+
+3 CELLS +CONSTANT >NAME
+5 CELLS +CONSTANT >DESCRIBE   ' >DESCRIBE METHOD DESCRIBE
+
+: PRINT-RESTART?   ." error: no restart "   DUP >NAME 2@ TYPE ;
+HERE ," RESTART?" DUP HERE SWAP -
+: DESCRIBE-RESTART?   ." Unknown restart" ;
+? CLONE RESTART? ( ... c -- restart? )   ? >UNHANDLED @ ,
+  ' PRINT-RESTART? , ( c-addr len ) , , ' DESCRIBE-RESTART? ,
