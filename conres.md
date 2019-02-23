@@ -259,6 +259,29 @@ should generally be sound, but I can only design a limited part of a
 system without actually using it first.  The following is a list of
 design issues I can see but have decided not to sidestep in this sketch:
 
+* The condition hierarchy needs to be worked out.  There need to be base
+  classes for warnings, errors, bugs, implementation limitations.  The
+  distinction between bugs and (runtime) errors is particularly
+  important, and many languages with exception systems (C++, Java,
+  Python...) get it wrong.  It is not clear to me if errors should be a
+  particular case of bugs, as in the example, or if the default handler
+  for an error should signal a bug; similarly for restarts.  It seems
+  that a handler for bugs would usually be installed by an interactive
+  toplevel of some sort, so it would make sense for it to also be an
+  absolute barrier for any conditions or restarts.  On the other hand,
+  there can also be fatal conditions that are not in any sense bugs,
+  like `SystemExit` in Python or `ThreadInterruptedException` in Java.
+
+* I don't know how to frame pointers should be passed around.  Wrapping
+  code like `(HANDLE)` might want to consume the relevant data on the
+  frame and advance the frame pointer it passes to underlying code to
+  point lower on the stack.  This probably composes better, but means
+  that, for example, a handler will not be able to call `PASS`.
+
+* The set of methods on a condition class is a sketch.  Unfortunately,
+  no methods can be added to a class once it has been defined, so things
+  like `DISPLAY` will have to be baked in.
+
 * The layout of slots and frames is too fragile and requires far too
   much boilerplate in user code.  It might make sense to use some sort
   of structure lexicon to simplify this, but there is a certain appeal
@@ -273,29 +296,6 @@ design issues I can see but have decided not to sidestep in this sketch:
   requirement to pack things into a separate xt serves nicely to enforce
   return stack separation that's in any case required by the words.  (In
   this sense, it's the syntax of `DO`/`LOOP` that is the mistake.)
-
-* I do not know how to frame pointers should be passed around.  Wrapping
-  code like `(HANDLE)` might want to consume the relevant data on the
-  frame and advance the frame pointer it passes to underlying code to
-  point lower on the stack.  This probably composes better, but means
-  that, for example, a handler will not be able to call `PASS`.
-
-* The set of methods on a condition class is a sketch.  Unfortunately,
-  no methods can be added to a class once it has been defined, so things
-  like `DISPLAY` will have to be baked in.
-
-* The condition hierarchy needs to be worked out.  There need to be base
-  classes for warnings, errors, bugs, implementation limitations.  The
-  distinction between bugs and (runtime) errors is particularly
-  important, and many languages with exception systems (C++, Java,
-  Python...) get it wrong.  It is not clear to me if errors should be a
-  particular case of bugs, as in the example, or if the default handler
-  for an error should signal a bug; similarly for restarts.  It seems
-  that a handler for bugs would usually be installed by an interactive
-  toplevel of some sort, so it would make sense for it to also be an
-  absolute barrier for any conditions or restarts.  On the other hand,
-  there can also be fatal conditions that are not in any sense bugs,
-  like `SystemExit` in Python or `ThreadInterruptedException` in Java.
 
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm
