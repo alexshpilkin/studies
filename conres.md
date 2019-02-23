@@ -254,6 +254,11 @@ of restarts could be incorporated into the a return stack trace.
 
 ## Design issues
 
+This is a proof of concept.  The organization and naming of the words
+should generally be sound, but I can only design a limited part of a
+system without actually using it first.  The following is a list of
+design issues I can see but have decided not to sidestep in this sketch:
+
 * The slot layout is too fragile, but I don't see how to improve things
   without making the system much more complex.
 
