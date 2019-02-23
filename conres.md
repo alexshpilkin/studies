@@ -67,8 +67,10 @@ meantime.
 A final word of warning: my implementations of `THROW ( -* )` and
 `CATCH ( ... xt -- ... f )` use ANS throw code 1 and pass through any
 others.  However, this is to be understood more as a debugging aid than
-a serious attempt at compatibility: an ANS exception passing through a
-condition handling construct will still break things.
+a serious attempt at interoperability: an ANS exception passing through
+a condition handling construct will still break things.  Actual
+interoperability is possible, but would disrupt the logical layering of
+code that this presentation uses.
 
 ## SIGNAL, RESPOND, and PASS
 
