@@ -2,10 +2,14 @@
 
 S" conres.fth" INCLUDED
 
+\ An error is not a bug, but an unhandled one is
+: DISPLAY-ERROR? ." error" ;
+? CLONE ERROR?   ? >UNHANDLED @ , ' DISPLAY-ERROR? ,
+
 : I/O?-DEVICE ( i/o? -- i/o? dev# )   OVER ;
 : DISPLAY-I/O?
   ." input/output error on device " I/O?-DEVICE . ;
-? CLONE I/O? ( dev# -- i/o? )   ? >UNHANDLED @ ,
+ERROR? CLONE I/O? ( dev# -- i/o? )   ERROR? >UNHANDLED @ ,
   ' DISPLAY-I/O? ,
 
 VARIABLE BUFFER

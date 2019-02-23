@@ -215,11 +215,11 @@ on the console in a user-readable form (leaving the stack intact).
 Additionally, the description of every condition should specify whether
 a handler is allowed to return or whether it has to invoke a restart.
 
-The base class for errors is `?`.  Any concrete error classes should
-have names ending with `?` and describing the object or action that
-encountered a problem, not the problem itself, because there is usually
-less arbitrary choice in naming the former: for example, `I/O?`, not
-`I/O-ERROR?`; `NAME?`, not `NAME-NOT-FOUND?`.
+The base class for bug and error conditions is `?`.  Any classes
+extending it should have names ending with `?` and describing the object
+or action that encountered a problem, not the problem itself, because
+there is usually less arbitrary choice in naming the former: for
+example, `I/O?`, not `I/O-ERROR?`; `NAME?`, not `NAME-NOT-FOUND?`.
 
 ## RESTART
 
@@ -229,8 +229,9 @@ handler frame, and using it to `ESCAPE` when needed.  For handlers that
 _always_ want to escape before doing anything else, this operation is
 packaged into a single word, `RESTART ( ... xt c -- ... f )`.  Restarts
 are simply conditions that are by convention always handled using
-`RESTART`; if a particular restart is requested but not available, it is
-processed like any other unhandled condition.
+`RESTART`.  The base class for restarts is `RESTART?`.  It extends `?`
+so as to also serve as a bug condition indicating that an unavailable
+restart was signalled.
 
 _Prior work note:_ The idea to make a restart a kind of condition is
 originally from Dylan; in Common Lisp, restarts are disjoint from
@@ -264,11 +265,20 @@ of restarts could be incorporated into the a return stack trace.
 
 * The set of methods on a condition class is a sketch.  Unfortunately,
   no methods can be added to a class once it has been defined, so things
-  like `PRINT` will have to be baked in.
+  like `DISPLAY` will have to be baked in.
 
 * The condition hierarchy needs to be worked out.  There need to be base
-  classes for warnings, programming errors (as a special case of
-  errors), implementation limitations.
+  classes for warnings, errors, bugs, implementation limitations.  The
+  distinction between bugs and (runtime) errors is particularly
+  important, and many languages with exception systems (C++, Java,
+  Python...) get it wrong.  It is not clear to me if errors should be a
+  particular case of bugs, as in the example, or if the default handler
+  for an error should signal a bug; similarly for restarts.  It seems
+  that a handler for bugs would usually be installed by an interactive
+  toplevel of some sort, so it would make sense for it to also be an
+  absolute barrier for any conditions or restarts.  On the other hand,
+  there can also be fatal conditions that are not in any sense bugs,
+  like `SystemExit` in Python or `ThreadInterruptedException` in Java.
 
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm

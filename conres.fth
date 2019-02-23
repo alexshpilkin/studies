@@ -93,7 +93,7 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
 ' DEFAULT-RESPONSE >F   FP@ RESPONSE !
 
 : UNHANDLED-?   ." Unhandled " DISPLAY ABORT ;
-: DISPLAY-?   ." error" ;
+: DISPLAY-?   ." bug" ;
 TOP CLONE ?   ' UNHANDLED-? , ' DISPLAY-? ,
 
 \ RESTART
@@ -106,8 +106,8 @@ TOP CLONE ?   ' UNHANDLED-? , ' DISPLAY-? ,
 3 CELLS +CONSTANT >NAME
 5 CELLS +CONSTANT >DESCRIBE   ' >DESCRIBE METHOD DESCRIBE
 
-: DISPLAY-RESTART?   ." error: no restart " DUP >NAME 2@ TYPE ;
+: DISPLAY-RESTART?   ." bug: no restart " DUP >NAME 2@ TYPE ;
 HERE ," RESTART?" DUP HERE SWAP -
-: DESCRIBE-RESTART?   ." Unknown restart" ;
+: DESCRIBE-RESTART?   ." Unspecified restart" ;
 ? CLONE RESTART? ( ... c -- restart? )   ? >UNHANDLED @ ,
   ' DISPLAY-RESTART? , ( c-addr len ) , , ' DESCRIBE-RESTART? ,
