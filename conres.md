@@ -220,7 +220,7 @@ Slot 1 (or `>UNHANDLED`) of every condition specifies the default
 handler for that condition, that will be executed if no handler on the
 stack accepts responsibility for it.  The default handler, unlike the
 usual ones, is invoked with the condition class on top of the stack.
-Slot 2 (`>PRINT`) should contain the xt that prints the condition data
+Slot 2 (`>DISPLAY`) should contain the xt that prints the condition data
 on the console in a user-readable form (leaving the stack intact).
 Additionally, the description of every condition should specify whether
 a handler is allowed to return or whether it has to invoke a restart.
