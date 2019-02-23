@@ -87,33 +87,27 @@ HERE CELL+ DUP , 1 CELLS ,   CONSTANT TOP
   ['] (HANDLE) RESPOND   F> DROP F> DROP ;
 
 1 CELLS +CONSTANT >UNHANDLED   ' >UNHANDLED METHOD UNHANDLED
-2 CELLS +CONSTANT >PRINT   ' >PRINT METHOD PRINT
+2 CELLS +CONSTANT >DISPLAY   ' >DISPLAY METHOD DISPLAY
 
 : DEFAULT-RESPONSE   ( с rf ) DROP UNHANDLED ;
 ' DEFAULT-RESPONSE >F   FP@ RESPONSE !
 
-: UNHANDLED-?   ." Unhandled " PRINT ABORT ;
-: PRINT-?   ." unspecified error " ;
-TOP CLONE ?   ' UNHANDLED-? , ' PRINT-? ,
+: UNHANDLED-?   ." Unhandled " DISPLAY ABORT ;
+: DISPLAY-?   ." error" ;
+TOP CLONE ?   ' UNHANDLED-? , ' DISPLAY-? ,
 
-\ UNWIND and RESTART
+\ RESTART
 
-: ((UNWIND)) ( ... c hf -* )   4 @F ESCAPE ;
-: (UNWIND) ( ... xt c tag -- ... )
-  >F   ['] ((UNWIND)) HANDLE   F> DROP ;
-: UNWIND ( ... xt c -- ... f )   ['] (UNWIND) RESUME ;
-
-VARIABLE RESTARTS   FP0 RESTARTS !
-
-: RESTART ( ... xt c -- ... f )
-  DUP >F   RESTARTS @ >F   FP@ RESTARTS !   UNWIND
-  F> RESTARTS !   F> DROP ;
+: ((RESTART)) ( ... c hf -* )   4 @F ESCAPE ;
+: (RESTART) ( ... xt c tag -- ... )
+  >F   ['] ((RESTART)) HANDLE   F> DROP ;
+: RESTART ( ... xt c -- ... f )   ['] (RESTART) RESUME ;
 
 3 CELLS +CONSTANT >NAME
 5 CELLS +CONSTANT >DESCRIBE   ' >DESCRIBE METHOD DESCRIBE
 
-: PRINT-RESTART?   ." error: no restart "   DUP >NAME 2@ TYPE ;
+: DISPLAY-RESTART?   ." error: no restart " DUP >NAME 2@ TYPE ;
 HERE ," RESTART?" DUP HERE SWAP -
 : DESCRIBE-RESTART?   ." Unknown restart" ;
 ? CLONE RESTART? ( ... c -- restart? )   ? >UNHANDLED @ ,
-  ' PRINT-RESTART? , ( c-addr len ) , , ' DESCRIBE-RESTART? ,
+  ' DISPLAY-RESTART? , ( c-addr len ) , , ' DESCRIBE-RESTART? ,

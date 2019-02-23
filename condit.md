@@ -220,27 +220,22 @@ encountered a problem, not the problem itself, because there is usually
 less arbitrary choice in naming the former: for example, `I/O?`, not
 `I/O-ERROR?`; `NAME?`, not `NAME-NOT-FOUND?`.
 
-## UNWIND and RESTART
+## RESTART
 
 For now, a handler that wants to escape to code up the call stack can be
 established by first establishing a `RESUME`, saving the tag to the
 handler frame, and using it to `ESCAPE` when needed.  For handlers that
 _always_ want to escape before doing anything else, this operation is
-packaged into a single word, `UNWIND ( ... xt c -- ... f )`.
-
-Restarts, then, are simply conditions that are by convention always
-handled using `UNWIND`; if a particular restart is requested but not
-available, it is processed like any other unhandled condition.  This is
-not sufficient to support introspection, however; that is accomplished
-using a second frame stack, with the pointer to the top frame stored in
-`RESTARTS`.  The word `RESTART` sets up a restart frame before executing
-`UNWIND`.
+packaged into a single word, `RESTART ( ... xt c -- ... f )`.  Restarts
+are simply conditions that are by convention always handled using
+`RESTART`; if a particular restart is requested but not available, it is
+processed like any other unhandled condition.
 
 _Prior work note:_  The idea to make a restart a kind of condition is
 originally from Dylan; in Common Lisp, restarts are disjoint from
-conditions.  However, while the functionality provided by `UNWIND` is
-desirable in any system, it is awkward to implement using restarts as
-the sole stack unwinding mechanism, while the reverse is straigtforward.
+conditions.  However, the functionality provided by `RESTART` is
+desirable in any system, but awkward to implement using restarts as the
+sole stack unwinding mechanism, while the reverse is straigtforward.
 This implementation uses the simpler Dylan approach.
 
 ## Example
