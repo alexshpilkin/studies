@@ -272,15 +272,45 @@ design issues I can see but have decided not to sidestep in this sketch:
   there can also be fatal conditions that are not in any sense bugs,
   like `SystemExit` in Python or `ThreadInterruptedException` in Java.
 
-* I don't know how to frame pointers should be passed around.  Wrapping
-  code like `(HANDLE)` might want to consume the relevant data on the
-  frame and advance the frame pointer it passes to underlying code to
-  point lower on the stack.  This probably composes better, but means
-  that, for example, a handler will not be able to call `PASS`.
+* Restarts being conditions still feels more like an accident than a
+  coherent choice; I can't think of a case where a hierarchy of restarts
+  could possibly be useful.
 
 * The set of methods on a condition class is a sketch.  Unfortunately,
   no methods can be added to a class once it has been defined, so things
   like `DISPLAY` will have to be baked in.
+
+* An actual implementation of frames using the return stack will need to
+  carefully specify which words that create frames (like `HANDLE`) make
+  them contiguous with whatever user code put there before.
+
+* Even if frame pointers are not actual addresses, a specification might
+  want to declare that they are disjoint from any addresses pointing to
+  user-created areas.  (ANS Forth doesn't do this even for xts, though.)
+
+* I don't know how to frame pointers should be passed around.  Wrapping
+  code like `(HANDLE)` might want to consume the relevant data on the
+  frame and advance the frame pointer it passes to underlying code to a
+  point lower on the stack.  This probably composes better, but means
+  that, for example, a handler will not be able to call `PASS`.
+
+* Restarts currently don't have user-accessible frames that could be
+  used without passing control to the restart, like `LIST-RESTARTS` does
+  in the example.  This may or may not be a good idea.  Restart code or
+  methods will also want to access the _condition_ it's handling; the
+  calling convention requires some thought.
+
+* It's not clear to me that the approach the example uses to enumerate
+  available restarts is the best one.  A separate stack containing only
+  the restarts is also an option, but then a restart barrier, like a
+  handler for `?`, will need to manipulate it explicitly to ensure
+  introspection works correctly.
+
+* Words are needed for inspecting and walking the response stack (at
+  least equivalent to those used in the example).  I'm not aware of any
+  general approaches to looping over arbitrary structures in Forth
+  (unlike its more Lispish cousins like Joy or Factor), so this will
+  have to be postponed for now.
 
 * The layout of slots and frames is too fragile and requires far too
   much boilerplate in user code.  It might make sense to use some sort
