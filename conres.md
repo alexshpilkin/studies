@@ -3,15 +3,15 @@
 This may be considered my response to Mitch Bradley's implied
 [challenge][1] to come up with a Forth idea that wasn't tried before (or
 at least that's how I took it... =) ).  I have tried to implement in ANS
-Forth a condition system in the vein of [Common Lisp][2], [Dylan][3],
-and [Racket][4].  If that seems too theoretical, the C2 wiki also
-[points out][5] that the DOS Abort/Retry/Ignore prompt is
+Forth a condition and restart system in the vein of [Common Lisp][2],
+[Dylan][3], and [Racket][4].  If that seems too theoretical, the C2 wiki
+also [points out][5] that the DOS Abort/Retry/Ignore prompt is
 _unimplementable_ on top of exception systems in every modern language
 except those three.  The best high-level overview of the idea known to
 me is [in _Practical Common Lisp_][6], and its originator Kent Pitman
 also wrote an [in-depth discussion][7] of the issues and design choices.
 This text will instead proceed from the lowest level up, describing
-parts of [the code](condit.fth) in corresponding sections.
+parts of the [code](conres.fth) in corresponding sections.
 
 ## Frame stack
 
@@ -144,24 +144,25 @@ Common Lisp implementers disagreed.
 
 ## Class system
 
-What is implemented up to this point is not a complete condition system,
-but only a foundation for one: while there is a mechanism to receive
-data about an unusual situation and accept or decline to handle it,
-there is no agreed protocol for doing so.  Similarly, while there is a
-way to escape to a chosen resumption point, possibly passing some data
-on the stack, there is no protocol for performing the choice.  This is
-what remains to be done: in [SysV ABI terms][15], the "personality".
+What is implemented up to this point is not a complete condition and
+restart system, but only a foundation for one: while there is a
+mechanism to receive data about an unusual situation and accept or
+decline to handle it, there is no agreed protocol for doing so.
+Similarly, while there is a way to escape to a chosen resumption point,
+possibly passing some data on the stack, there is no protocol for
+performing the choice.  This is what remains to be done: in SysV ABI
+terms, the "[personality][15]".
 
 Following common terminology, I call unusual situations that are handled
 by the system _conditions_, the responses to them _handlers_, and the
-ways of recovery from those situations _restarts_.  Condition data
-is put on the data stack before calling `SIGNAL`, and each handler uses
-the contents of its frame to decide whether to handle or `PASS`.  A
-restart is simply a condition whose handler, by convention, immediately
-escapes to the restart code, leaving the restart data intact on the data
-stack.  In both cases, more specific data should be placed below less
-specific, so that the handler or restart code can still work even if it
-is only prepared to handle a less specific kind of condition or restart.
+ways of recovery from those situations _restarts_.  Condition data is
+put on the data stack before calling `SIGNAL`, and each handler uses the
+contents of its frame to decide whether to handle or `PASS`.  A restart
+is simply a condition whose handler, by convention, immediately escapes
+to the restart code, leaving the restart data intact on the data stack.
+In both cases, more specific data should be placed below less specific,
+so that the handler or restart code can still work even if it is only
+prepared to handle a less specific kind of condition or restart.
 
 What we need, then, is a way of organizing the various kinds of
 conditions and restarts in a hierarchy by specificity.  After thinking
@@ -200,7 +201,7 @@ The protocol for signalling conditions has already been described above:
 put the condition data and condition class on the stack, then call
 `SIGNAL`.  To handle subclasses of a class `c` using `handler-xt` during
 execution of `xt`, call `HANDLE ( ... xt handler-xt c -- ... )`.  The
-handler receives the pointer to its own frame on top of the class;  the
+handler receives the pointer to its own frame on top of the class; the
 last cell put on the frame stack before `HANDLE` is accessible using
 `4 @F` (and so on for earlier cells).  Returning from the handler causes
 execution to resume after `SIGNAL`.
@@ -231,7 +232,7 @@ are simply conditions that are by convention always handled using
 `RESTART`; if a particular restart is requested but not available, it is
 processed like any other unhandled condition.
 
-_Prior work note:_  The idea to make a restart a kind of condition is
+_Prior work note:_ The idea to make a restart a kind of condition is
 originally from Dylan; in Common Lisp, restarts are disjoint from
 conditions.  However, the functionality provided by `RESTART` is
 desirable in any system, but awkward to implement using restarts as the
@@ -240,15 +241,15 @@ This implementation uses the simpler Dylan approach.
 
 ## Example
 
-This final part demonstrates a DOS-style Abort/Retry/Ignore prompt,
-with even more modularity than in DOS: the simulated `SYSTEM` provides
-the prompt, but has no knowledge of the available recovery options; the
-simulated `SHELL` and I/O subsystem provide the options, and the
-simulated `APPLICATION` has no knowledge of either.  A serious attempt
-at an interactive debugger would probably look a lot like `SYSTEM`,
-except it could use system-specific knowledge to implement a full REPL
-for the user to inspect the system.  Alternatively, the list of restarts
-could be incorporated into the a return stack trace.
+The [example](crexam.fth) demonstrates a DOS-style Abort/Retry/Ignore
+prompt, with even more modularity than in DOS: the simulated `SYSTEM`
+provides the prompt, but has no knowledge of the available recovery
+options; the simulated `SHELL` and I/O subsystem provide the options,
+and the simulated `APPLICATION` has no knowledge of either.  A serious
+attempt at an interactive debugger would probably look a lot like
+`SYSTEM`, except it could use system-specific knowledge to implement a
+full REPL for the user to inspect the system.  Alternatively, the list
+of restarts could be incorporated into the a return stack trace.
 
 ## Design issues
 
@@ -266,8 +267,8 @@ could be incorporated into the a return stack trace.
   like `PRINT` will have to be baked in.
 
 * The condition hierarchy needs to be worked out.  There need to be base
-  classes for warnings, programming errors (as a special case of errors),
-  implementation limitations.
+  classes for warnings, programming errors (as a special case of
+  errors), implementation limitations.
 
 [1]:  https://github.com/ForthHub/discussion/issues/79#issuecomment-454218065
 [2]:  http://www.lispworks.com/documentation/lw71/CLHS/Body/09_.htm

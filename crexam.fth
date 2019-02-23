@@ -1,6 +1,6 @@
 \ Conditions and restarts --- Example
 
-S" condit.fth" INCLUDED
+S" conres.fth" INCLUDED
 
 : I/O?-DEVICE ( i/o? -- i/o? dev# )   OVER ;
 : DISPLAY-I/O?
