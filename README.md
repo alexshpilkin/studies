@@ -10,8 +10,8 @@ studies currently include:
   without requiring the handler to know how the restart is implemented
   or the restart code to contain handling policy.  Comes with detailed
   [documentation](conres.md), an [example](crexam.fth) and a [test
-  suite](crtest.fth).  Uses only the CORE and EXCEPTION ANS wordsets,
-  but overrides several standard words.
+  suite](crtest.fth).  Uses only the CORE and EXCEPTION ANS wordsets and
+  the CORE EXT word `PARSE`, but overrides several standard words.
 
 Everything here is free to use or modify however you please, with no
 legal requirement to give attribution (although of course I’ll

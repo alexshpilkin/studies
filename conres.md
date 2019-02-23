@@ -252,6 +252,9 @@ attempt at an interactive debugger would probably look a lot like
 full REPL for the user to inspect the system.  Alternatively, the list
 of restarts could be incorporated into the a return stack trace.
 
+Unlike the rest of the code, the example doesn't limit itself to the ANS
+CORE wordset; it uses quotations from Forth 200x and INCLUDED from FILE.
+
 ## Design issues
 
 This is a proof of concept.  The organization and naming of the words
