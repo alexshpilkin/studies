@@ -13,6 +13,14 @@ also wrote an [in-depth discussion][7] of the issues and design choices.
 This text will instead proceed from the lowest level up, describing
 parts of the [code](conres.fth) in corresponding sections.
 
+There's nothing particularly non-obvious about this code; given an
+active imagination, one could even claim it does nothing but mix the
+well-known ideas of error callbacks and non-local exits in a particular
+way, any obscure Lisp influences notwithstanding.  I still think it's
+remarkable how this particular combination of these ideas achieves a
+decoupling of error policy and mechanisms in a way that conventional
+exception systems can't.
+
 ## Frame stack
 
 These first two parts are essentially workarounds for inflexibilities in
@@ -249,8 +257,8 @@ options; the simulated `SHELL` and I/O subsystem provide the options,
 and the simulated `APPLICATION` has no knowledge of either.  A serious
 attempt at an interactive debugger would probably look a lot like
 `SYSTEM`, except it could use system-specific knowledge to implement a
-full REPL for the user to inspect the system.  Alternatively, the list
-of restarts could be incorporated into the a return stack trace.
+full debugging REPL.  Alternatively, the list of restarts could be
+incorporated into the a return stack trace.
 
 Unlike the rest of the code, the example doesn't limit itself to the ANS
 CORE wordset; it uses quotations from Forth 200x and INCLUDED from FILE.
