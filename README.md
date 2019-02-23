@@ -9,8 +9,9 @@ studies currently include:
   can be handled by restarting execution at one of predetermined points,
   without requiring the handler to know how the restart is implemented
   or the restart code to contain handling policy.  Comes with detailed
-  [documentation](conres.md).  Uses only the CORE and EXCEPTION ANS
-  wordsets, but overrides several standard words.
+  [documentation](conres.md), an [example](crexam.fth) and a [test
+  suite](crtest.fth).  Uses only the CORE and EXCEPTION ANS wordsets,
+  but overrides several standard words.
 
 Everything here is free to use or modify however you please, with no
 legal requirement to give attribution (although of course I’ll
