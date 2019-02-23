@@ -63,7 +63,7 @@ VARIABLE RESPONSE
   FP@ SWAP   0 >F   CATCH ( ... 0 | tag -1 )   F> DROP
   DUP ANDIF OVER FP@ <> THEN   IF DROP THROW THEN   NOTHROW
   DUP IF NIP THEN ;
-  ( the 0 ensures different RESUMEs have different tags )
+\ the 0 ensures different RESUMEs have different tags
 
 \ Class system
 

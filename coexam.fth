@@ -35,8 +35,8 @@ RESTART? CLONE RETRY?   RESTART? >UNHANDLED @ ,
 
 HERE ," ABORT?" DUP HERE SWAP -
 : DESCRIBE-ABORT?   ." Stop and return to shell" ;
-TOP CLONE ABORT?   RESTART? >UNHANDLED @ , RESTART? >PRINT @ ,
-  ( c-addr len ) , , ' DESCRIBE-ABORT? ,
+RESTART? CLONE ABORT?   RESTART? >UNHANDLED @ ,
+  RESTART? >PRINT @ , ( c-addr len ) , , ' DESCRIBE-ABORT? ,
 
 : SHELL
   MARK
