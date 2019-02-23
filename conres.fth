@@ -1,6 +1,6 @@
 \ Conditions and restarts
 
-\ For symmetry with CELL+
+\ From folklore
 : CELL-   [ 1 CELLS ] LITERAL - ;
 \ From folklore
 : +CONSTANT   CREATE , DOES> @ + ;
@@ -8,7 +8,7 @@
 : ,"   [CHAR] " PARSE   HERE   OVER ALLOT   SWAP CMOVE ;
 \ From Wil Baden's TOOLBELT 2002
 : ANDIF   POSTPONE DUP POSTPONE IF POSTPONE DROP ; IMMEDIATE
-\ For backtraces in Gforth
+\ From Gforth, for correct backtraces
 : NOTHROW   ['] FALSE CATCH 2DROP ;
 
 \ Frame stack

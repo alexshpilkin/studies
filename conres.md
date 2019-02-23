@@ -259,8 +259,20 @@ should generally be sound, but I can only design a limited part of a
 system without actually using it first.  The following is a list of
 design issues I can see but have decided not to sidestep in this sketch:
 
-* The slot layout is too fragile, but I don't see how to improve things
-  without making the system much more complex.
+* The layout of slots and frames is too fragile and requires far too
+  much boilerplate in user code.  It might make sense to use some sort
+  of structure lexicon to simplify this, but there is a certain appeal
+  to defining classes in one pass instead of compiling default data
+  first and overwriting it later.
+
+* The syntax in general is downright miserable to use without quotations
+  and still awkward with them, similar to ANS Forth exceptions.  A
+  syntax more in line with usual Forth control structures, like that of
+  the `ALERT`/`EXCEPT`/`RESUME` proposal, might be better, even if it's
+  unimplementable in terms of ANS words.  On the other hand, the
+  requirement to pack things into a separate xt serves nicely to enforce
+  return stack separation that's in any case required by the words.  (In
+  this sense, it's the syntax of `DO`/`LOOP` that is the mistake.)
 
 * I do not know how to frame pointers should be passed around.  Wrapping
   code like `(HANDLE)` might want to consume the relevant data on the
