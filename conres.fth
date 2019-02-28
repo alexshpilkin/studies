@@ -22,6 +22,16 @@ VARIABLE FP   FP0 FP !
 
 \ Stack-preserving THROW and CATCH
 
+\ Implementation using RP@ / RP! and SP@ / SP!, does not account
+\ for locals or floats:
+\
+\ VARIABLE CATCHER
+\ : CATCH   FP @ >R CATCHER @ >R   RP@ CATCHER !   EXECUTE
+\   R> CATCHER ! R> FP !   FALSE ;
+\ : THROW   CATCHER @ RP!   R> CATCHER ! R> FP !   TRUE ;
+\ : MARK   POSTPONE SP@ POSTPONE >R ; IMMEDIATE
+\ : TRIM   POSTPONE R> POSTPONE SP! ; IMMEDIATE
+
 VARIABLE CATCHDEPTH   VARIABLE STASHDEPTH
 CREATE STASH   32 CELLS ALLOT
 
